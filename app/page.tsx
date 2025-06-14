@@ -8,6 +8,9 @@ export default function ExcelUploader() {
   const [data, setData] = useState<{ email: string; company: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [subject, setSubject] = useState("Test Subject");
+  const [emailContent, setEmailContent] = useState("Testing Content");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -21,20 +24,6 @@ export default function ExcelUploader() {
     const sheet = workbook.Sheets[sheetName];
     const jsonData: any[] = XLSX.utils.sheet_to_json(sheet);
 
-    //   // Assuming columns named 'Email' and 'Company'
-    //   const uniqueData = Array.from(
-    //     new Map(
-    //       jsonData.map((item) => [
-    //         item.Email,
-    //         { email: item.Email, company: item.Company },
-    //       ])
-    //     ).values()
-    //   );
-
-    //   setData(uniqueData);
-    // };
-
-    // Assuming columns named 'Email' and 'Company'
     const allData = jsonData.map((item) => ({
       email: item.Email,
       company: item.Company,
@@ -43,19 +32,52 @@ export default function ExcelUploader() {
     setData(allData);
   };
 
+  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setResumeFile(file);
+    }
+  };
+
   const sendEmails = async () => {
+    if (!resumeFile) {
+      alert("Please upload a resume file.");
+      return;
+    }
+
     setLoading(true);
-    console.log("Sending emails with data:", JSON.stringify(data));
-    // Simulate API call
-    //   await fetch('/api/sendEmails', {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify(data),
-    //   });
-    // };
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setLoading(false);
-    alert("Emails sent successfully!");
+
+    const emailData = data.map((item) => ({
+      email: item.email,
+      company: item.company,
+      subject: subject,
+      content: emailContent,
+      resume: resumeFile,
+    }));
+
+    const formData = new FormData();
+    formData.append("emailData", JSON.stringify(emailData));
+
+    try {
+      console.log("Sending data:");
+      console.log(emailData);
+
+      const response = await fetch("/api/sendEmails", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        alert("Emails sent successfully!");
+      } else {
+        alert("Failed to send emails.");
+      }
+    } catch (error) {
+      console.error("Error sending emails:", error);
+      alert("An error occurred while sending emails.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,6 +103,51 @@ export default function ExcelUploader() {
           {fileName && (
             <p className="mt-2 text-sm text-green-600">Uploaded: {fileName}</p>
           )}
+        </div>
+        <div className="mb-4">
+          <label
+            htmlFor="subject"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Email Subject
+          </label>
+          <input
+            id="subject"
+            type="text"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="block w-full text-sm border border-gray-300 rounded py-2 px-4"
+          />
+        </div>
+        <div className="mb-4">
+          <label
+            htmlFor="email-content"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Email Content
+          </label>
+          <textarea
+            id="email-content"
+            value={emailContent}
+            onChange={(e) => setEmailContent(e.target.value)}
+            className="block w-full text-sm border border-gray-300 rounded py-2 px-4"
+            rows={4}
+          />
+        </div>
+        <div className="mb-4">
+          <label
+            htmlFor="resume-upload"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Upload Resume (PDF)
+          </label>
+          <input
+            id="resume-upload"
+            type="file"
+            accept=".pdf"
+            onChange={handleResumeUpload}
+            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-gray-300 file:text-sm file:font-medium file:bg-gray-100 file:hover:bg-gray-200"
+          />
         </div>
         {data.length > 0 && (
           <div className="mb-4">
