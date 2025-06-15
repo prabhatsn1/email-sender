@@ -39,47 +39,6 @@ export default function ExcelUploader() {
     }
   };
 
-  // const sendEmails = async () => {
-  //   if (!resumeFile) {
-  //     alert("Please upload a resume file.");
-  //     return;
-  //   }
-
-  //   setLoading(true);
-
-  //   const emailData = data.map((item) => ({
-  //     email: item.email,
-  //     company: item.company,
-  //     subject: subject,
-  //     content: emailContent,
-  //     resume: resumeFile,
-  //   }));
-
-  //   const formData = new FormData();
-  //   formData.append("emailData", JSON.stringify(emailData));
-
-  //   try {
-  //     console.log("Sending data:");
-  //     console.log(emailData);
-
-  //     const response = await fetch("/api/sendEmails", {
-  //       method: "POST",
-  //       body: formData,
-  //     });
-
-  //     if (response.ok) {
-  //       alert("Emails sent successfully!");
-  //     } else {
-  //       alert("Failed to send emails.");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error sending emails:", error);
-  //     alert("An error occurred while sending emails.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const sendEmails = async () => {
     if (!resumeFile) {
       alert("Please upload a resume file.");
@@ -106,8 +65,9 @@ export default function ExcelUploader() {
 
     try {
       console.log("Sending emails to:", emailData.length, "recipients");
+      const url: string = process.env.API_URL || "/api/sendEmails";
 
-      const response = await fetch("/api/sendEmails", {
+      const response = await fetch(url, {
         method: "POST",
         body: formData,
       });
