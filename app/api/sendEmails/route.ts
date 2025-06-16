@@ -23,6 +23,11 @@ transporter.verify((error) => {
   }
 });
 
+// Helper function to replace company name placeholders
+function replaceCompanyName(text: string, companyName: string): string {
+  return text.replace(/CompanyName/g, companyName);
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Parse form data
@@ -92,6 +97,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
     //  // Create uploads directory if it doesn't exist
     //  const uploadsDir = path.join(process.cwd(), "uploads");
     //  try {
@@ -99,6 +105,7 @@ export async function POST(request: NextRequest) {
     //  } catch {
     //    await fs.mkdir(uploadsDir, { recursive: true });
     //  }
+
     // Use Vercel's temporary storage directory
     const uploadsDir = "/tmp";
     const timestamp = Date.now();
@@ -115,12 +122,22 @@ export async function POST(request: NextRequest) {
     // Send emails
     for (const recipient of emailData) {
       try {
+        // Replace CompanyName placeholders in subject and content
+        const personalizedSubject = replaceCompanyName(
+          recipient.subject,
+          recipient.companyName
+        );
+        const personalizedContent = replaceCompanyName(
+          recipient.content,
+          recipient.companyName
+        );
+
         const info = await transporter.sendMail({
           from: process.env.SMTP_FROM_EMAIL,
           to: recipient.email,
-          subject: recipient.subject,
-          text: recipient.content,
-          html: recipient.content.replace(/\n/g, "<br>"), // Basic HTML conversion
+          subject: personalizedSubject,
+          text: personalizedContent,
+          html: personalizedContent.replace(/\n/g, "<br>"), // Basic HTML conversion
           attachments: [
             {
               filename: "resume.pdf",
@@ -132,22 +149,27 @@ export async function POST(request: NextRequest) {
 
         results.push({
           email: recipient.email,
+          companyName: recipient.companyName,
           success: true,
           messageId: info.messageId,
+          personalizedSubject,
         });
 
-        console.log(`Email sent to ${recipient.email}: ${info.messageId}`);
+        console.log(
+          `Email sent to ${recipient.email} (${recipient.companyName}): ${info.messageId}`
+        );
       } catch (emailError: unknown) {
         const errorMessage =
           emailError instanceof Error
             ? emailError.message
             : "Unknown error occurred";
         console.error(
-          `Failed to send email to ${recipient.email}:`,
+          `Failed to send email to ${recipient.email} (${recipient.companyName}):`,
           emailError
         );
         errors.push({
           email: recipient.email,
+          companyName: recipient.companyName,
           error: errorMessage,
         });
       }
