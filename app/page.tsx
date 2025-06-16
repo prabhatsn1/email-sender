@@ -60,7 +60,7 @@ export default function ExcelUploader() {
     }));
 
     const formData = new FormData();
-    formData.append("emailData", JSON.stringify(emailData));
+    formData.append("requests", JSON.stringify(emailData));
     formData.append("resume", resumeFile); // This was missing the file itself
 
     try {
