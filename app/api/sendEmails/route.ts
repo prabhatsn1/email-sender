@@ -1,4 +1,3 @@
-// app/api/sendEmails/route.ts
 import { NextRequest } from "next/server";
 import nodemailer from "nodemailer";
 import fs from "fs/promises";
@@ -93,20 +92,20 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), "uploads");
-    try {
-      await fs.access(uploadsDir);
-    } catch {
-      await fs.mkdir(uploadsDir, { recursive: true });
-    }
-
-    // Save resume file temporarily
+    //  // Create uploads directory if it doesn't exist
+    //  const uploadsDir = path.join(process.cwd(), "uploads");
+    //  try {
+    //    await fs.access(uploadsDir);
+    //  } catch {
+    //    await fs.mkdir(uploadsDir, { recursive: true });
+    //  }
+    // Use Vercel's temporary storage directory
+    const uploadsDir = "/tmp";
     const timestamp = Date.now();
     const resumeFileName = `resume_${timestamp}.pdf`;
     const resumeFilePath = path.join(uploadsDir, resumeFileName);
 
+    // Save resume file temporarily
     const resumeBuffer = Buffer.from(await resumeFile.arrayBuffer());
     await fs.writeFile(resumeFilePath, resumeBuffer);
 
