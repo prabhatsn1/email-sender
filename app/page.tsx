@@ -62,11 +62,11 @@ export default function ExcelUploader() {
     const formData = new FormData();
     formData.append("requests", JSON.stringify(emailData));
     formData.append("resume", resumeFile); // This was missing the file itself
-    console.log("API URL:", url);
+
     try {
       console.log("Sending emails to:", emailData.length, "recipients");
       const url: string = process.env.API_URL || "/api/sendEmails";
-
+      console.log("API URL:", url);
       const response = await fetch(url, {
         method: "POST",
         body: formData,
