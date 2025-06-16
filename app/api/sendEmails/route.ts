@@ -28,13 +28,13 @@ export async function POST(request: NextRequest) {
   try {
     // Parse form data
     const formData = await request.formData();
-    const emailDataRaw = formData.get("emailData") as string;
+    const emailDataRaw = formData.get("requests") as string;
     const resumeFile = formData.get("resume") as File;
 
     // Validate required fields
     if (!emailDataRaw || !resumeFile) {
       return Response.json(
-        { error: "Missing required fields: emailData or resume" },
+        { error: "Missing required fields: requests or resume" },
         { status: 400 }
       );
     }
