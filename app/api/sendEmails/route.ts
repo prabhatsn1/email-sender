@@ -125,11 +125,11 @@ export async function POST(request: NextRequest) {
         // Replace CompanyName placeholders in subject and content
         const personalizedSubject = replaceCompanyName(
           recipient.subject,
-          recipient.companyName
+          recipient.company
         );
         const personalizedContent = replaceCompanyName(
           recipient.content,
-          recipient.companyName
+          recipient.company
         );
 
         const info = await transporter.sendMail({
@@ -149,14 +149,14 @@ export async function POST(request: NextRequest) {
 
         results.push({
           email: recipient.email,
-          companyName: recipient.companyName,
+          companyName: recipient.company,
           success: true,
           messageId: info.messageId,
           personalizedSubject,
         });
 
         console.log(
-          `Email sent to ${recipient.email} (${recipient.companyName}): ${info.messageId}`
+          `Email sent to ${recipient.email} (${recipient.company}): ${info.messageId}`
         );
       } catch (emailError: unknown) {
         const errorMessage =
@@ -164,12 +164,12 @@ export async function POST(request: NextRequest) {
             ? emailError.message
             : "Unknown error occurred";
         console.error(
-          `Failed to send email to ${recipient.email} (${recipient.companyName}):`,
+          `Failed to send email to ${recipient.email} (${recipient.company}):`,
           emailError
         );
         errors.push({
           email: recipient.email,
-          companyName: recipient.companyName,
+          companyName: recipient.company,
           error: errorMessage,
         });
       }
