@@ -28,6 +28,28 @@ function replaceCompanyName(text: string, companyName: string): string {
   return text.replace(/CompanyName/g, companyName);
 }
 
+// Helper function to convert text content to HTML
+function textToHTML(text: string): string {
+  return text
+    .replace(/\n/g, "<br>")
+    .replace(/•\t(.*?)(?=(\n|$))/g, "<li>$1</li>")
+    .replace(/<li>(.*?)<\/li>/g, '<ul style="margin: 5px 0;"><li>$1</li></ul>')
+    .replace(/<\/ul><ul style="margin: 5px 0;">/g, "")
+    .replace(/📧 (.*?)(?=(\n|$))/g, '📧 <a href="mailto:$1">$1</a>')
+    .replace(
+      /🌐 Portfolio/g,
+      '🌐 <a href="https://prabhatsoni.vercel.app/" target="_blank">Portfolio</a>'
+    )
+    .replace(
+      /🔗 LinkedIn/g,
+      '🔗 <a href="https://www.linkedin.com/in/prabhat-soni/" target="_blank">LinkedIn</a>'
+    )
+    .replace(
+      /GitHub/g,
+      '<a href="https://github.com/prabhatsoni99" target="_blank">GitHub</a>'
+    );
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Parse form data
@@ -132,12 +154,19 @@ export async function POST(request: NextRequest) {
           recipient.company
         );
 
+        // Convert text to HTML with proper formatting
+        const htmlContent = `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            ${textToHTML(personalizedContent)}
+          </div>
+        `;
+
         const info = await transporter.sendMail({
           from: process.env.SMTP_FROM_EMAIL,
           to: recipient.email,
           subject: personalizedSubject,
-          text: personalizedContent,
-          html: personalizedContent.replace(/\n/g, "<br>"), // Basic HTML conversion
+          text: personalizedContent, // Plain text version
+          html: htmlContent, // HTML version with proper formatting
           attachments: [
             {
               filename: "resume.pdf",
