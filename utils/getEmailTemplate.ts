@@ -74,9 +74,9 @@ export function getEmailTemplate({ companyName }: EmailTemplateProps): string {
         <p>
           <span class="icon">📧</span> <a href="mailto:prabhatsn3@gmail.com">prabhatsn3@gmail.com</a><br>
           <span class="icon">📞</span> 9455811106<br>
-          <span class="icon">🌐</span> <a href="https://prabhatsoni.vercel.app/" target="_blank">Portfolio</a><br>
-          <span class="icon">🔗</span> <a href="https://www.linkedin.com/in/prabhat-soni/" target="_blank">LinkedIn</a> | 
-          <a href="https://github.com/prabhatsoni99" target="_blank">GitHub</a>
+          <span class="icon">🌐</span> <a href="https://portfolio-psoni.vercel.app/" target="_blank">Portfolio</a><br>
+          <span class="icon">🔗</span> <a href="https://www.linkedin.com/in/prabhatsn1/" target="_blank">LinkedIn</a> | 
+          <a href="https://github.com/prabhatsn1" target="_blank">GitHub</a>
         </p>
       </div>
     </div>
