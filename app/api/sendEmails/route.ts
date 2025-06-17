@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
         `;
 
         const info = await transporter.sendMail({
-          from: process.env.SMTP_FROM_EMAIL,
+          from: `"Prabhat Soni" <${process.env.SMTP_FROM_EMAIL}>`,
           to: recipient.email,
           subject: personalizedSubject,
           text: personalizedContent, // Plain text version
