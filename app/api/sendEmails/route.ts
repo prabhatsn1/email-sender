@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import nodemailer from "nodemailer";
 import fs from "fs/promises";
 import path from "path";
+import { getEmailTemplate } from "@/utils/getEmailTemplate";
 
 // Create transporter
 const transporter = nodemailer.createTransport({
@@ -26,28 +27,6 @@ transporter.verify((error) => {
 // Helper function to replace company name placeholders
 function replaceCompanyName(text: string, companyName: string): string {
   return text.replace(/CompanyName/g, companyName);
-}
-
-// Helper function to convert text content to HTML
-function textToHTML(text: string): string {
-  return text
-    .replace(/\n/g, "<br>")
-    .replace(/•\t(.*?)(?=(\n|$))/g, "<li>$1</li>")
-    .replace(/<li>(.*?)<\/li>/g, '<ul style="margin: 5px 0;"><li>$1</li></ul>')
-    .replace(/<\/ul><ul style="margin: 5px 0;">/g, "")
-    .replace(/📧 (.*?)(?=(\n|$))/g, '📧 <a href="mailto:$1">$1</a>')
-    .replace(
-      /🌐 Portfolio/g,
-      '🌐 <a href="https://prabhatsoni.vercel.app/" target="_blank">Portfolio</a>'
-    )
-    .replace(
-      /🔗 LinkedIn/g,
-      '🔗 <a href="https://www.linkedin.com/in/prabhat-soni/" target="_blank">LinkedIn</a>'
-    )
-    .replace(
-      /GitHub/g,
-      '<a href="https://github.com/prabhatsoni99" target="_blank">GitHub</a>'
-    );
 }
 
 export async function POST(request: NextRequest) {
@@ -155,11 +134,9 @@ export async function POST(request: NextRequest) {
         );
 
         // Convert text to HTML with proper formatting
-        const htmlContent = `
-          <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-            ${textToHTML(personalizedContent)}
-          </div>
-        `;
+        const htmlContent = getEmailTemplate({
+          companyName: recipient.company,
+        });
 
         const info = await transporter.sendMail({
           from: `"Prabhat Soni" <${process.env.SMTP_FROM_EMAIL}>`,
