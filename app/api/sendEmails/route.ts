@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
           html: htmlContent, // HTML version with proper formatting
           attachments: [
             {
-              filename: "resume.pdf",
+              filename: "Prabhat_Resume.pdf",
               path: resumeFilePath,
               contentType: "application/pdf",
             },
