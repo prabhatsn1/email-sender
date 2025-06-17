@@ -1,58 +1,95 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import * as XLSX from "xlsx";
+import {
+  senderProfiles,
+  getProfileByIdentifier,
+  getDefaultProfile,
+} from "@/utils/senderProfiles";
 
 export default function ExcelUploader() {
-  const [data, setData] = useState<{ email: string; company: string }[]>([]);
+  const [recipients, setRecipients] = useState<
+    { email: string; company: string }[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState("");
-  const [subject, setSubject] = useState("Test Subject");
-  const [emailContent, setEmailContent] = useState("Testing Content");
+  const [subject, setSubject] = useState(getDefaultProfile().subject);
+  const [emailContent, setEmailContent] = useState(
+    getDefaultProfile().emailContent
+  );
   const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<string>(
+    getDefaultProfile().name
+  );
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Optimize with useCallback to prevent unnecessary re-renders
+  const handleFile = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    setFileName(file.name);
+      setFileName(file.name);
 
-    const arrayBuffer = await file.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const jsonData: any[] = XLSX.utils.sheet_to_json(sheet);
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer);
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-    const allData = jsonData.map((item) => ({
-      email: item.Email,
-      company: item.Company,
-    }));
+      const allData = jsonData.map((item: any) => ({
+        email: (item as any).Email,
+        company: (item as any).Company,
+      }));
 
-    setData(allData);
-  };
+      setRecipients(allData);
+    },
+    []
+  );
 
-  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setResumeFile(file);
-    }
-  };
+  const handleResumeUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        setResumeFile(file);
+      }
+    },
+    []
+  );
 
-  const sendEmails = async () => {
+  // Handle profile selection change with useCallback
+  const handleProfileChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const profileName = e.target.value;
+      setSelectedProfile(profileName);
+
+      // Find the selected profile
+      const profile = getProfileByIdentifier(profileName);
+      if (profile) {
+        // Update form fields based on selected profile
+        setSubject(profile.subject);
+        setEmailContent(profile.emailContent);
+      }
+    },
+    []
+  );
+
+  // Optimize email sending function with useCallback
+  const sendEmails = useCallback(async () => {
     if (!resumeFile) {
       alert("Please upload a resume file.");
       return;
     }
 
-    if (data.length === 0) {
+    if (recipients.length === 0) {
       alert("Please upload an Excel file with email data.");
       return;
     }
 
     setLoading(true);
 
-    const emailData = data.map((item) => ({
+    const emailData = recipients.map((item) => ({
       email: item.email,
       company: item.company,
       subject: subject,
@@ -61,10 +98,12 @@ export default function ExcelUploader() {
 
     const formData = new FormData();
     formData.append("emailData", JSON.stringify(emailData));
-    formData.append("resume", resumeFile); // This was missing the file itself
+    formData.append("resume", resumeFile);
+    formData.append("senderName", selectedProfile);
 
     try {
       console.log("Sending emails to:", emailData.length, "recipients");
+      console.log("Selected profile:", selectedProfile);
       const url: string = process.env.NEXT_PUBLIC_API_URL || "/api/sendEmails";
       console.log("API URL:", url);
       const response = await fetch(url, {
@@ -87,7 +126,7 @@ export default function ExcelUploader() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [resumeFile, recipients, subject, emailContent, selectedProfile]);
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -95,6 +134,36 @@ export default function ExcelUploader() {
         <h1 className="text-2xl font-bold mb-4 text-center">
           Excel Email Sender
         </h1>
+
+        {/* Sender Profile Dropdown */}
+        <div className="mb-4">
+          <label
+            htmlFor="sender-profile"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Select Sender Profile
+          </label>
+          <select
+            id="sender-profile"
+            value={selectedProfile}
+            onChange={handleProfileChange}
+            className="block w-full text-sm border border-gray-300 rounded py-2 px-4"
+          >
+            {senderProfiles.map((profile) => (
+              <option key={profile.id} value={profile.name}>
+                {profile.name}
+              </option>
+            ))}
+          </select>
+          {selectedProfile && (
+            <p className="mt-2 text-sm text-blue-600">
+              Please upload{" "}
+              {getProfileByIdentifier(selectedProfile)?.resumeFileName}
+            </p>
+          )}
+        </div>
+
+        {/* Rest of your component remains the same */}
         <div className="mb-4">
           <label
             htmlFor="file-upload"
@@ -158,10 +227,12 @@ export default function ExcelUploader() {
             className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-gray-300 file:text-sm file:font-medium file:bg-gray-100 file:hover:bg-gray-200"
           />
         </div>
-        {data.length > 0 && (
+        {recipients.length > 0 && (
           <div className="mb-4">
-            <h2 className="text-lg font-semibold mb-2">Uploaded Data</h2>
-            <div className="max-h-100 overflow-y-auto border border-gray-300 rounded">
+            <h2 className="text-lg font-semibold mb-2">
+              Uploaded Data ({recipients.length} recipients)
+            </h2>
+            <div className="max-h-60 overflow-y-auto border border-gray-300 rounded">
               <table className="table-auto w-full border-collapse">
                 <thead>
                   <tr>
@@ -172,8 +243,11 @@ export default function ExcelUploader() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.map((item, index) => (
-                    <tr key={index}>
+                  {recipients.map((item, index) => (
+                    <tr
+                      key={index}
+                      className={index % 2 === 0 ? "bg-gray-50" : ""}
+                    >
                       <td className="border border-gray-300 px-4 py-2">
                         {item.email}
                       </td>
@@ -189,14 +263,16 @@ export default function ExcelUploader() {
         )}
         <button
           onClick={sendEmails}
-          disabled={loading || data.length === 0}
+          disabled={loading || recipients.length === 0}
           className={`w-full py-2 px-4 rounded text-white ${
-            loading
+            loading || recipients.length === 0
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-blue-500 hover:bg-blue-600"
           }`}
         >
-          {loading ? "Sending Emails..." : "Send Emails"}
+          {loading
+            ? "Sending Emails..."
+            : `Send ${recipients.length ? recipients.length : ""} Emails`}
         </button>
       </div>
     </div>
