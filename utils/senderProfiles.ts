@@ -11,7 +11,8 @@ export const senderProfiles: SenderProfile[] = [
   {
     id: "prabhat",
     name: "Prabhat Soni",
-    subject: "Job Application - Prabhat Soni",
+    subject:
+      "Senior Software Engineer | Interest in Opportunities at CompanyName",
     emailContent: `Dear Recruiter,
     
     I hope you're doing well.
@@ -39,22 +40,6 @@ export const senderProfiles: SenderProfile[] = [
     `,
     resumeFileName: "Prabhat_Resume.pdf",
     templateId: "prabhat",
-  },
-  {
-    id: "john",
-    name: "John Doe",
-    subject: "Software Developer Position - John Doe",
-    emailContent: "I'm a full-stack developer with 5 years of experience...",
-    resumeFileName: "John_Resume.pdf",
-    templateId: "john",
-  },
-  {
-    id: "jane",
-    name: "Jane Smith",
-    subject: "Senior Developer Application - Jane Smith",
-    emailContent: "With 8+ years of experience in cloud architecture...",
-    resumeFileName: "Jane_Resume.pdf",
-    templateId: "jane",
   },
 ];
 
