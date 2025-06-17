@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 import fs from "fs/promises";
 import path from "path";
 import { getEmailTemplate } from "@/utils/getEmailTemplate";
+import { getProfileByIdentifier } from "@/utils/senderProfiles";
 
 // Create transporter
 const transporter = nodemailer.createTransport({
@@ -35,6 +36,13 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const emailDataRaw = formData.get("emailData") as string;
     const resumeFile = formData.get("resume") as File;
+    const senderName = formData.get("senderName") as string;
+
+    // Get sender profile based on name
+    const senderProfile = senderName
+      ? getProfileByIdentifier(senderName)
+      : null;
+    const templateId = senderProfile?.templateId;
 
     // Validate required fields
     if (!emailDataRaw || !resumeFile) {
@@ -99,14 +107,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    //  // Create uploads directory if it doesn't exist
-    //  const uploadsDir = path.join(process.cwd(), "uploads");
-    //  try {
-    //    await fs.access(uploadsDir);
-    //  } catch {
-    //    await fs.mkdir(uploadsDir, { recursive: true });
-    //  }
-
     // Use Vercel's temporary storage directory
     const uploadsDir = "/tmp";
     const timestamp = Date.now();
@@ -136,17 +136,23 @@ export async function POST(request: NextRequest) {
         // Convert text to HTML with proper formatting
         const htmlContent = getEmailTemplate({
           companyName: recipient.company,
+          templateId: templateId, // Use the template ID from the sender profile
         });
 
+        // Determine the resume filename to display in the attachment
+        const displayFileName = senderProfile?.resumeFileName || "Resume.pdf";
+
         const info = await transporter.sendMail({
-          from: `"Prabhat Soni" <${process.env.SMTP_FROM_EMAIL}>`,
+          from: `"${senderName || "Prabhat Soni"}" <${
+            process.env.SMTP_FROM_EMAIL
+          }>`,
           to: recipient.email,
           subject: personalizedSubject,
           text: personalizedContent, // Plain text version
           html: htmlContent, // HTML version with proper formatting
           attachments: [
             {
-              filename: "Prabhat_Resume.pdf",
+              filename: displayFileName,
               path: resumeFilePath,
               contentType: "application/pdf",
             },
